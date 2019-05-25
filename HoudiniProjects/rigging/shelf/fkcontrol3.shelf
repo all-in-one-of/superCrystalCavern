@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<shelfDocument>
+  <!-- This file contains definitions of shelves, toolbars, and tools.
+ It should not be hand-edited when it is being used by the application.
+ Note, that two definitions of the same element are not allowed in
+ a single file. -->
+
+  <tool name="fkcontrol3" label="FK Control 3" icon="PLASMA_App">
+    <script scriptType="python"><![CDATA[# Make FK controls 
+# just click button
+#################################
+ctrlclick = kwargs["ctrlclick"]
+shiftclick = kwargs["shiftclick"]
+
+
+# get the selection to find the path
+object = hou.selectedNodes()
+netparent = object[0].parent()
+
+selectname = kwargs['toolname']
+
+print netparent
+choice = ()
+choice = hou.ui.readInput(
+    message = "Specify a prefix",
+    initial_contents = selectname )
+
+name = choice[1]
+
+
+fkcontrolname =  name + '_ctrl'
+fkautoname = name + '_auto'
+fkoffsetname = name + '_offset'
+
+ctrlsize = 1
+
+ctrls = []
+# make offset
+fkoffset = netparent.createNode("null", fkoffsetname)
+fkoffset.setSelectableInViewport(False)
+fkoffset.parm("picking").set(0)
+fkoffset.setDisplayFlag(False)
+fkoffset.setFirstInput(object[0])
+fkoffset.moveToGoodPosition()
+fkoffset.parm('keeppos').set(True)
+fkoffset.setFirstInput(None)
+fkoffset.parm("rOrd").set("zyx")
+for child in fkoffset.children():
+    child.destroy()
+ctrls.append(fkoffset)
+
+# make auto
+fkauto = netparent.createNode("null", fkautoname)
+fkauto.setSelectableInViewport(False)
+fkauto.parm("picking").set(0)
+fkauto.setDisplayFlag(False)
+fkauto.setFirstInput(fkoffset)
+fkauto.moveToGoodPosition()
+fkauto.parm('keeppos').set(True)
+fkauto.parm("rOrd").set("zyx")
+for child in fkauto.children():
+    child.destroy()
+ctrls.append(fkauto)    
+
+# make ctrl
+fkcontrol = netparent.createNode("null", fkcontrolname)
+fkcontrol.setFirstInput(fkauto)
+fkcontrol.moveToGoodPosition()
+fkcontrol.parm('keeppos').set(True)
+fkcontrol.parm("rOrd").set("zyx")
+fkcontrol.setColor(hou.Color([0.145, 0.667, 0.557]))
+fkcontrol.parm('controltype').set(1)
+fkcontrol.parm('geoscale').set(ctrlsize)
+fkcontrol.moveParmTransformIntoPreTransform()
+fkcontrol.parm('orientation').set(3)
+ctrls.append(fkcontrol)
+
+if ctrlclick:
+    for ctrl in ctrls:
+    
+        # Lock parameters so unexpected behavior isn't allowed
+        value = 1
+        ctrl.parmTuple('t').lock((value, value, value))
+        ctrl.parmTuple('r').lock((value, value, value))
+        ctrl.parmTuple('s').lock((value, value, value))
+        ctrl.parmTuple('p').lock((value, value, value))
+        ctrl.parmTuple('pr').lock((value, value, value))
+        ctrl.parm('scale').lock(value)
+    
+value = 0
+fkcontrol.parmTuple('r').lock((value, value, value))]]></script>
+  </tool>
+</shelfDocument>
